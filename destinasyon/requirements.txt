@@ -1,0 +1,10 @@
+# Arayuz
+customtkinter>=5.2
+pillow>=10.0
+
+# PostgreSQL surucusu (saf Python; Windows Uygulama Denetimi politikasi
+# psycopg2'nin DLL'lerini engelledigi icin tercih edildi)
+pg8000>=1.31
+
+# Paketleme (Asama 3)
+pyinstaller>=6.3

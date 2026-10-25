@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Karadeniz Turizm",
+    "slug": "karadeniz-turizm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "karadenizturizm",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.turizm.karadeniz"
+    },
+    "android": {
+      "package": "com.turizm.karadeniz"
+    },
+    "extra": {
+      "apiUrl": "http://10.0.2.2:3000",
+      "webUrl": "http://10.0.2.2:5173"
+    }
+  }
+}

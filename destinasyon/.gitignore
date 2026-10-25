@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+
+# Calisma zamani ciktilari
+app.log
+tools/smoke_screenshot.png
+
+# Destinasyon resimleri (klasor yapisi korunur, icerik surumlenmez)
+images/*
+!images/.gitkeep
+
+# PyInstaller (Asama 3)
+build/
+dist/
+*.spec
+!app.spec

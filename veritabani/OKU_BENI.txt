@@ -1,0 +1,4 @@
+Karadeniz Turizm veri paketi
+============================
+Bu klasoru baska bilgisayara kopyalayip panelden 'Paket Yukle' ile acabilirsiniz.
+Icinde: manifest.json, data/*.json, turizm.sqlite, images/

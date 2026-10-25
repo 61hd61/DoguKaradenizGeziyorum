@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 480px;
+  z-index: 0;
+  background: #e2e8f0;
+}
+
+html[data-weather='sunny'] .app-shell {
+  background: linear-gradient(180deg, #fff7ed 0%, #f8fafc 120px);
+}
+
+html[data-weather='rain'] .app-shell {
+  background: linear-gradient(180deg, #e0f2fe 0%, #f1f5f9 120px);
+}
+
+html[data-weather='snow'] .app-shell {
+  background: linear-gradient(180deg, #f0f9ff 0%, #f8fafc 120px);
+}
+
+html[data-weather='cloud'] .app-shell {
+  background: #f8fafc;
+}
+
+.turizm-marker-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+.turizm-type-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #059669;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: transparent !important;
+}
+
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background: transparent !important;
+}

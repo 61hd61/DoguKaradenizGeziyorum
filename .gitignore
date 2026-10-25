@@ -1,0 +1,44 @@
+# Bağımlılıklar
+**/node_modules/
+**/.pnp
+.pnp.js
+
+# Derleme
+**/dist/
+**/build/
+**/*.tsbuildinfo
+**/.turbo/
+**/.vite/
+
+# Gizli / yerel ayar
+.env
+.env.local
+.env.*.local
+!.env.example
+**/.env
+!**/.env.example
+
+# Python
+**/__pycache__/
+**/.venv/
+**/venv/
+*.pyc
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Log
+*.log
+npm-debug.log*
+
+# Upload geçici
+uploads/
+
+# Expo
+**/.expo/
+**/android/
+**/ios/

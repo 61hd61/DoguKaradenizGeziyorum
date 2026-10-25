@@ -1,0 +1,20 @@
+[
+  {
+    "id": "8dabb708-73be-4304-bce9-d4e99bf7532d",
+    "userId": "1650c8dd-4c00-4d2d-9ebc-ad8647824234",
+    "firstName": "Ali",
+    "lastName": "Veli",
+    "bio": "",
+    "createdAt": "2026-10-25T18:44:49.837000",
+    "updatedAt": "2026-10-25T18:44:49.837000"
+  },
+  {
+    "id": "d7b08da0-48cf-474b-8c27-ef14b183a032",
+    "userId": "2f7b1d43-4ef2-4301-8d3a-acbc9de18704",
+    "firstName": "hakan",
+    "lastName": "durmuş",
+    "bio": "",
+    "createdAt": "2026-10-25T18:46:23.119000",
+    "updatedAt": "2026-10-25T18:46:23.119000"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "format": "karadeniz-turizm-paket",
+  "version": 1,
+  "createdAt": "2026-10-25T16:02:31.164617+00:00",
+  "secenekler": {
+    "destinasyonlar": true,
+    "kullanicilar": true,
+    "profiller": true,
+    "blog_yazilari": true,
+    "resimleri_kopyala": true
+  },
+  "counts": {
+    "destinations": 1199,
+    "users": 2,
+    "user_profiles": 2,
+    "posts": 0
+  }
+}

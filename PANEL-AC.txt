@@ -1,0 +1,18 @@
+VERI YONETIM PANELI (destinasyon girisi / listeleme)
+=================================================
+
+Cift tiklayin:
+  C:\Users\hakan\OneDrive\Masaüstü\ödev\VERI-YONETIM-PANELI.bat
+
+veya:
+  ödev\destinasyon\baslat-panel.bat
+
+Panelde:
+  - Sol: kayit ekle / duzenle (aciklama, coklu resim)
+  - Orta: tum kayitlar, arama, filtre
+  - Sag: onizleme
+  - Ust: "Cift Kayitlar" (tekrar temizleme), veritabani/ yedek
+
+PostgreSQL (trabzon_turizm) acik olmali. Sifre config.ini: 1234
+
+Web haritasi ayri: baslat.bat veya localhost:5173

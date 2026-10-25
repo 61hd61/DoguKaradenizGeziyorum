@@ -1,0 +1,20 @@
+[
+  {
+    "id": "1650c8dd-4c00-4d2d-9ebc-ad8647824234",
+    "username": "ud1c09b",
+    "email": "deneme_67bbedb4@outlook.com",
+    "role": "USER",
+    "isEmailVerified": true,
+    "createdAt": "2026-10-25T18:44:49.837000",
+    "updatedAt": "2026-10-25T18:44:49.837000"
+  },
+  {
+    "id": "2f7b1d43-4ef2-4301-8d3a-acbc9de18704",
+    "username": "yesilyol",
+    "email": "hakandurmus61@gmail.com",
+    "role": "USER",
+    "isEmailVerified": true,
+    "createdAt": "2026-10-25T18:46:23.119000",
+    "updatedAt": "2026-10-25T18:46:23.119000"
+  }
+]

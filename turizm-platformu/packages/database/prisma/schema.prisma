@@ -1,0 +1,605 @@
+// Prisma Schema for Turizm Platformu
+// PostgreSQL + PostGIS support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // For PostGIS, uncomment below and run: CREATE EXTENSION postgis;
+  // relations = ["PostGIS"]
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum TourParticipantType {
+  SOLO
+  FAMILY
+  FRIENDS
+}
+
+enum TourVehicleType {
+  CAR
+  BUS
+  PUBLIC_TRANSPORT
+  BICYCLE
+  WALKING
+}
+
+enum DestinationTypeEnum {
+  CAMI
+  TURBE
+  KILISE
+  SAPEL
+  KALE
+  TARIHI_BINA
+  HAN
+  HAMAM
+  SELALE
+  KOPRU
+  SIVIL_MIMARI
+  MAGARA
+  MILLI_PARK
+  MUZE
+  SENLIKLER
+  GOL
+  KANYON
+  YERLESim
+  CEshME
+  DEGIRMEN
+  KOY
+  ANTIK
+  ANIT
+  KULTUR_EVI
+  MEDRESE
+  KAYMAKAMLIK
+  OKUL
+  BAHCE_KAPISI
+  KAYA_MEZARI
+  KAYAUSTU
+  KAYALIK
+  TOPRAK_ALTI
+  YAMAC
+  ARKEOLOJIK
+}
+
+enum ReviewCategory {
+  FAMILY
+  ADULT
+  SOLO
+  FRIENDS
+}
+
+enum PostVisibility {
+  PUBLIC
+  FOLLOWERS_ONLY
+  PRIVATE
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  NEW_POST
+  NEW_COMMENT
+  REVIEW_LIKE
+  TOUR_INVITE
+  SYSTEM
+}
+
+// ============================================
+// CORE TABLES
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique @db.VarChar(50)
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String    @db.VarChar(255)
+  avatarUrl     String?   @db.VarChar(500)
+  role          UserRole  @default(USER)
+  isEmailVerified Boolean @default(false)
+  emailVerifiedAt DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile       UserProfile?
+  reviews       Review[]
+  reviewLikes   ReviewLike[]
+  favorites     Favorite[]
+  clicks        Click[]
+  tours         UserTour[]
+  posts         Post[]
+  postLikes     PostLike[]
+  comments      Comment[]
+  refreshTokens RefreshToken[]
+  followers     Follow[] @relation("Following")
+  following     Follow[] @relation("Follower")
+  notifications Notification[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  firstName     String   @db.VarChar(100)
+  lastName      String   @db.VarChar(100)
+  bio           String?  @db.Text
+  // Encrypted personal data (phone, address, etc.) - Admin CANNOT read
+  encryptedData String?  @db.Text
+  preferences   Json?    // Language, theme, notifications, etc.
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// ============================================
+// DESTINATION TABLES
+// ============================================
+
+model Province {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(50)
+  code      String   @unique @db.VarChar(5) // Plate code: 61, 28, 52, 29, 53, 08
+  latitude  Decimal  @db.Decimal(9,6)
+  longitude Decimal  @db.Decimal(9,6)
+  zoom      Int      @default(9)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  districts District[]
+  destinations Destination[]
+
+  @@map("provinces")
+}
+
+model District {
+  id         String   @id @default(cuid())
+  name       String   @db.VarChar(100)
+  slug       String   @db.VarChar(100)
+  provinceId String
+  latitude   Decimal? @db.Decimal(9,6)
+  longitude  Decimal? @db.Decimal(9,6)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  province Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  destinations Destination[]
+
+  @@unique([provinceId, slug])
+  @@index([provinceId])
+  @@map("districts")
+}
+
+model DestinationCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(80)
+  slug        String   @unique @db.VarChar(80)
+  icon        String?  @db.VarChar(100) // Marker icon name
+  color       String?  @db.VarChar(7)   // Hex color for map
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  destinations Destination[]
+
+  @@map("destination_types")
+}
+
+model Destination {
+  id              String       @id @default(cuid())
+  name            String       @db.VarChar(200)
+  slug            String       @unique @db.VarChar(200)
+  description     String?      @db.Text
+  shortDescription String?     @db.VarChar(500)
+  typeId          String
+  provinceId      String
+  districtId      String?
+  latitude        Decimal      @db.Decimal(9,6)
+  longitude       Decimal      @db.Decimal(9,6)
+  address         String?      @db.VarChar(500)
+  phone           String?      @db.VarChar(50)
+  website         String?      @db.VarChar(255)
+  openingHours    Json?        // { "monday": "09:00-18:00", ... }
+  images          String[]     @default([]) // Image URLs/paths
+  thumbnailUrl    String?      @db.VarChar(500)
+  metadata        Json?        // Flexible extra data
+  isActive        Boolean      @default(true)
+  isFeatured      Boolean      @default(false)
+  viewCount       Int          @default(0)
+  clickCount      Int          @default(0)
+  averageRating   Decimal      @default(0) @db.Decimal(3,2)
+  reviewCount     Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  type       DestinationCategory @relation(fields: [typeId], references: [id])
+  province   Province        @relation(fields: [provinceId], references: [id])
+  district   District?       @relation(fields: [districtId], references: [id])
+  translations DestinationTranslation[]
+  reviews    Review[]
+  favorites  Favorite[]
+  clicks     Click[]
+  tourDestinations TourDestination[]
+
+  @@index([provinceId, typeId])
+  @@index([latitude, longitude])
+  @@index([isActive, isFeatured])
+  @@index([slug])
+  @@map("destinations")
+}
+
+model DestinationTranslation {
+  id            String @id @default(cuid())
+  destinationId String
+  langCode      String @db.VarChar(5) // tr, en, ru, ar, de
+  name          String @db.VarChar(200)
+  description   String? @db.Text
+  shortDescription String? @db.VarChar(500)
+
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@unique([destinationId, langCode])
+  @@index([langCode])
+  @@map("destination_translations")
+}
+
+// ============================================
+// INTERACTION TABLES
+// ============================================
+
+model Review {
+  id            String         @id @default(cuid())
+  userId        String
+  destinationId String
+  category      ReviewCategory
+  content       String         @db.Text
+  rating        Int            // 1-5
+  isApproved    Boolean        @default(false) // Admin approval
+  approvedAt    DateTime?
+  approvedBy    String?        // Admin user ID
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  likes       ReviewLike[]
+
+  @@index([destinationId, isApproved])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("reviews")
+}
+
+model ReviewLike {
+  id        String @id @default(cuid())
+  reviewId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@map("review_likes")
+}
+
+model Favorite {
+  id            String @id @default(cuid())
+  userId        String
+  destinationId String
+  createdAt     DateTime @default(now())
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, destinationId])
+  @@map("favorites")
+}
+
+model Click {
+  id            String   @id @default(cuid())
+  userId        String?
+  destinationId String
+  ipAddress     String?  @db.VarChar(45)
+  userAgent     String?  @db.Text
+  referrer      String?  @db.VarChar(500)
+  createdAt     DateTime @default(now())
+
+  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@index([destinationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("clicks")
+}
+
+// ============================================
+// TOUR SYSTEM
+// ============================================
+
+model UserTour {
+  id              String            @id @default(cuid())
+  userId          String
+  name            String             @db.VarChar(200)
+  description     String?            @db.Text
+  startDate       DateTime
+  endDate         DateTime
+  participantType TourParticipantType
+  vehicleType     TourVehicleType
+  preferences     String[]           @default([]) // Destination type IDs
+  status          String             @default("DRAFT") // DRAFT, PLANNED, ACTIVE, COMPLETED
+  totalDistance   Decimal?           @db.Decimal(10,2) // km
+  estimatedDuration Int?             // minutes
+  weatherData     Json?              // Cached weather forecast
+  packingSuggestions Json?           // Clothing/gear suggestions
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destinations      TourDestination[]
+
+  @@index([userId, status])
+  @@index([startDate, endDate])
+  @@map("user_tours")
+}
+
+model TourDestination {
+  id            String @id @default(cuid())
+  tourId        String
+  destinationId String
+  orderIndex    Int
+  durationMinutes Int?      // Planned stay duration
+  notes         String?     @db.Text
+  arrivalTime   DateTime?   // Planned arrival
+  departureTime DateTime?   // Planned departure
+
+  tour        UserTour     @relation(fields: [tourId], references: [id], onDelete: Cascade)
+  destination Destination  @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@unique([tourId, orderIndex])
+  @@index([tourId])
+  @@map("tour_destinations")
+}
+
+model PopularRoute {
+  id            String   @id @default(cuid())
+  name          String   @db.VarChar(200)
+  description   String?  @db.Text
+  destinationIds String[] // Ordered array of destination IDs
+  provinceIds   String[] // Provinces covered
+  usageCount    Int      @default(0)
+  averageRating Decimal  @default(0) @db.Decimal(3,2)
+  totalDuration Int?     // minutes
+  totalDistance Decimal? @db.Decimal(10,2) // km
+  vehicleType   TourVehicleType?
+  participantType TourParticipantType?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([provinceIds])
+  @@index([vehicleType, participantType])
+  @@map("popular_routes")
+}
+
+// ============================================
+// BLOG / SOCIAL
+// ============================================
+
+model Post {
+  id          String         @id @default(cuid())
+  userId      String
+  title       String         @db.VarChar(200)
+  content     String         @db.Text
+  images      String[]       @default([])
+  visibility  PostVisibility @default(PUBLIC)
+  location    String?        @db.VarChar(200) // Optional location tag
+  latitude    Decimal?       @db.Decimal(9,6)
+  longitude   Decimal?       @db.Decimal(9,6)
+  likeCount   Int            @default(0)
+  commentCount Int           @default(0)
+  viewCount   Int            @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes   PostLike[]
+
+  @@index([userId, visibility, publishedAt])
+  @@index([publishedAt])
+  @@map("posts")
+}
+
+model PostLike {
+  id        String @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model Comment {
+  id        String @id @default(cuid())
+  postId    String
+  userId    String
+  content   String @db.Text
+  parentId  String? // For replies
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post   Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent Comment? @relation("Replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("Replies")
+
+  @@index([postId, createdAt])
+  @@index([userId])
+  @@map("comments")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("followers")
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String           @db.VarChar(200)
+  message   String           @db.Text
+  referenceId String?        // Related entity ID (post, review, tour, etc.)
+  referenceType String?      // POST, REVIEW, TOUR, USER, etc.
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ============================================
+// ADMIN / AUDIT
+// ============================================
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @db.VarChar(255)
+  name         String   @db.VarChar(100)
+  role         String   @default("ADMIN") // ADMIN, SUPER_ADMIN
+  permissions  String[] @default([])
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   @db.VarChar(100) // CREATE, UPDATE, DELETE, APPROVE, REJECT, etc.
+  entityType  String   @db.VarChar(50)  // USER, DESTINATION, REVIEW, TOUR, etc.
+  entityId    String   @db.VarChar(100)
+  oldData     Json?
+  newData     Json?
+  ipAddress   String?  @db.VarChar(45)
+  userAgent   String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// AUTH / SECURITY
+// ============================================
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String   @db.VarChar(255)
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String   @db.VarChar(255)
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// WEATHER CACHE (for tour planning)
+// ============================================
+
+model WeatherCache {
+  id        String   @id @default(cuid())
+  latitude  Decimal  @db.Decimal(9,6)
+  longitude Decimal  @db.Decimal(9,6)
+  date      DateTime @db.Date
+  data      Json     // Weather API response
+  createdAt DateTime @default(now())
+
+  @@unique([latitude, longitude, date])
+  @@index([date])
+  @@map("weather_cache")
+}
