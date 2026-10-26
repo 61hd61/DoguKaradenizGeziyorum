@@ -14,8 +14,12 @@ echo ============================================================
 echo.
 
 if /I "%~1"=="--import" (
-  echo [Veri] 6 il + resimler PostgreSQL'e aktariliyor...
-  python tools\import_from_odev.py
+  echo [Veri] veritabani paketi PostgreSQL'e aktariliyor...
+  python tools\import_veritabani_paket.py
+  if errorlevel 1 (
+    echo Paket yuklenemedi; 6 il klasoru varsa eski import deneniyor...
+    python tools\import_from_odev.py
+  )
   echo.
 )
 

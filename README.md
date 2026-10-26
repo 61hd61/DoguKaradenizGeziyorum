@@ -1,86 +1,53 @@
-# Karadeniz Turizm Platformu (GitHub paketi)
+# Dugu Karadeniz Geziyorum
 
-Bu klasör, projeyi GitHub’a yükleyip başka bir bilgisayarda çalıştırmak için hazırlanmış **tam kaynak paketidir**.
+Karadeniz turizm platformu: **harita (web)**, **API**, **masaüstü veri paneli**, isteğe bağlı **mobil (Expo)**.
 
-## İçerik
+## Ne nerede?
 
-| Klasör / dosya | Açıklama |
-|----------------|----------|
-| `turizm-platformu/` | Web (React), API (Fastify), mobil (Expo) monorepo |
-| `destinasyon/` | Masaüstü veri yönetim paneli (Python) |
-| `veritabani/` | Taşınabilir JSON/SQLite + görseller paketi |
-| `trabzon`, `giresun`, … | İl kaynak verileri (import için) |
-| `TUMUNU-BASLAT.bat` | API + web + panel birlikte |
-| `docker-compose.yml` | İsteğe bağlı PostgreSQL |
+| Adres | Ne? |
+|--------|-----|
+| **http://localhost:5173** | **Asıl uygulama** — harita, giriş, tur, profil, admin |
+| **http://localhost:3000/health** | **API** — JSON; tarayıcıda `{ "status": "ok" }` görürsünüz. Site değil, arka uç. |
+| **Masaüstü panel** | `destinasyon\baslat-panel.bat` — destinasyon CRUD, paket, çift kayıt |
 
-## Gereksinimler
+GitHub’daki `localhost` linkleri **sadece bilgisayarınızda sunucu çalışırken** açılır; repoya tıklayınca otomatik çalışmaz.
 
-- **Node.js 20+**
-- **PostgreSQL 14+** (veya `docker compose up -d`)
-- **Python 3.10+** (masaüstü panel ve `--import` için)
-- Windows: `.bat` dosyaları; macOS/Linux: komutları README altından uyarlayın
+## İlk kurulum (Windows)
 
-## Hızlı başlangıç (Windows)
-
-1. PostgreSQL’de veritabanları:
-   - `trabzon_turizm`
-   - `trabzon_turizm_users`  
-   → `KULLANICI-VERITABANI-OLUSTUR.bat` veya Docker `scripts/init-databases.sql`
-
-2. Ortam dosyası ( **siz oluşturursunuz** — bkz. `GITHUB-EKSTRA-DOSYALAR.md` ):
-   ```text
-   copy turizm-platformu\.env.example turizm-platformu\.env
-   copy turizm-platformu\apps\api\.env.example turizm-platformu\apps\api\.env
-   ```
-   `JWT_SECRET` ve `PII_ENCRYPTION_KEY` değerlerini mutlaka değiştirin.
-
-3. Bağımlılıklar:
+1. **Node.js 20+** ve **PostgreSQL** (şifre örnek: `1234`)
+2. Veritabanları: `KULLANICI-VERITABANI-OLUSTUR.bat`  
+   veya `docker compose up -d` (kök `docker-compose.yml`)
+3. Tek komut kurulum:
    ```bat
-   cd turizm-platformu
-   npm install
-   cd apps\web
-   npm install
-   cd ..\api
-   npm install
+   KURULUM.bat
    ```
-
-4. Veritabanı şeması: Prisma push (ilk kurulum):
-   ```bat
-   cd turizm-platformu\packages\database
-   npx prisma db push
-   ```
-
-5. Veri aktarımı (isteğe bağlı, 6 il):
-   ```bat
-   cd destinasyon
-   baslat.bat --import
-   ```
-
-6. Çalıştır:
+4. Çalıştır:
    ```bat
    TUMUNU-BASLAT.bat
    ```
-   - Harita: http://localhost:5173  
-   - Admin: http://localhost:5173/admin (`admin@turizm.local` / `admin123`)  
-   - API: http://localhost:3000/health  
 
-## GitHub’a yükleme
+**Admin (web):** http://localhost:5173/admin — `admin@turizm.local` / `admin123`  
+(API ilk açılışta bu hesabı oluşturur.)
 
-Depo **kökü** bu `github` klasörünün içeriği olmalı (klasörün kendisi değil, içindekiler):
+## Veri
+
+- **`veritabani/`** — hazır paket (~1200 destinasyon + görseller). `KURULUM.bat` veya `scripts\VERITABANI-YUKLE.bat` ile yüklenir.
+- Eski **6 il klasörü** repoda yok; gerekirse panelden **Paket Yükle** veya kendi `import_from_odev.py` akışınız.
+
+## Manuel adımlar
 
 ```bat
-cd C:\...\ödev\github
-git init
-git add .
-git commit -m "Karadeniz turizm platformu"
-git branch -M main
-git remote add origin https://github.com/KULLANICI/REPO.git
-git push -u origin main
+cd turizm-platformu
+npm install
+copy .env.example .env
+copy apps\api\.env.example apps\api\.env
+cd packages\database
+npx prisma db push
+cd ..\..\destinasyon
+python tools\import_veritabani_paket.py
 ```
 
-> **Not:** `.env` dosyaları `.gitignore` ile yüklenmez. GitHub Secrets veya sunucuda elle oluşturulur.
-
-## Mobil (Expo)
+## Mobil
 
 ```bat
 cd turizm-platformu\apps\mobile
@@ -88,15 +55,15 @@ npm install
 baslat-mobil.bat
 ```
 
-## Docker ile sadece PostgreSQL
+## Ortam değişkenleri
 
-```bat
-docker compose up -d
-```
+`.env` dosyalarını **siz** oluşturursunuz (repoda yok). Şablon: `turizm-platformu\.env.example`  
+Üretimde `JWT_SECRET`, `PII_ENCRYPTION_KEY` mutlaka değiştirin. Geliştirmede `SKIP_EMAIL_VERIFY=true` kullanılabilir.
 
-Ardından şema + import adımlarını yapın.
+## API ne işe yarar?
 
-## Dokümantasyon
+Web ve mobil, PostgreSQL’e doğrudan bağlanmaz. Giriş, destinasyon listesi, yorum, hava durumu, admin istatistikleri vb. **`/api/v1/...`** üzerinden `map-server.ts` ile sunulur. Vite (5173), istekleri geliştirmede 3000’e proxy eder.
 
-- `ödev.txt`, `master-prompt.md` — proje şartnamesi
-- `GITHUB-EKSTRA-DOSYALAR.md` — GitHub’da **sizin yazmanız gereken** dosyalar
+## Lisans / şartname
+
+`ödev.txt`, `master-prompt.md` — proje gereksinimleri.
