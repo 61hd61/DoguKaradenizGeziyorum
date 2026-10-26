@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import List, Optional, Set
+from typing import Callable, List, Optional, Set
 
 import customtkinter as ctk
 
@@ -47,8 +47,10 @@ class MainWindow(ctk.CTk):
         config: AppConfig,
         config_manager: ConfigManager,
         db: DatabaseManager,
+        on_back: Optional[Callable[[], None]] = None,
     ) -> None:
         super().__init__()
+        self._on_back = on_back
         self._paths = paths
         self._config = config
         self._config_manager = config_manager
@@ -156,6 +158,16 @@ class MainWindow(ctk.CTk):
             actions, text="Baglanti bekleniyor", font=self.fonts["label"], text_color=p.text_muted
         )
         self.connection_label.pack(side="left", padx=(0, 12))
+
+        if self._on_back is not None:
+            ctk.CTkButton(
+                actions,
+                text="← Ana menü",
+                width=110,
+                height=34,
+                corner_radius=8,
+                command=self._return_to_hub,
+            ).pack(side="left", padx=(0, 8))
 
         self.reconnect_button = ctk.CTkButton(
             actions,
@@ -747,7 +759,11 @@ class MainWindow(ctk.CTk):
         self.status_label.configure(text=message)
         logger.info("Durum: %s", message)
 
+    def _return_to_hub(self) -> None:
+        self.on_close()
+        if self._on_back is not None:
+            self._on_back()
+
     def on_close(self) -> None:
         self._discard_pending_images()
-        self._db.close()
         self.destroy()
