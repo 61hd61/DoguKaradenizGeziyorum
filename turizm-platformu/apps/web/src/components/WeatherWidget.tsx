@@ -6,11 +6,13 @@ const MOOD_EMOJI: Record<string, string> = {
   rain: '🌧️',
   snow: '❄️',
   cloud: '☁️',
+  windy: '💨',
 }
 
 export default function WeatherWidget() {
   const { t } = useTranslation()
-  const { temp, mood, packing } = useWeatherTheme()
+  const { temp, effectiveMood, packing } = useWeatherTheme()
+  const mood = effectiveMood
 
   return (
     <div className="weather-widget rounded-lg border border-white/40 bg-white/90 px-3 py-2 text-xs shadow-sm backdrop-blur">

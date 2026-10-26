@@ -843,26 +843,31 @@ app.get("/api/v1/weather", async (request, reply) => {
     return reply.status(400).send({ success: false, error: { message: "Geçersiz koordinat" } });
   }
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,wind_speed_10m&timezone=auto`;
     const res = await fetch(url);
     const json = (await res.json()) as {
-      current?: { temperature_2m?: number; weather_code?: number; is_day?: number };
+      current?: { temperature_2m?: number; weather_code?: number; is_day?: number; wind_speed_10m?: number };
     };
     const code = json.current?.weather_code ?? 0;
     const temp = json.current?.temperature_2m ?? null;
-    let mood: "sunny" | "rain" | "snow" | "cloud" = "cloud";
+    const windSpeed = json.current?.wind_speed_10m ?? null;
+    let mood: "sunny" | "rain" | "snow" | "cloud" | "windy" = "cloud";
     if ([71, 73, 75, 77, 85, 86].includes(code)) mood = "snow";
     else if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99].includes(code)) mood = "rain";
+    else if (windSpeed != null && windSpeed >= 20) mood = "windy";
     else if ([0, 1].includes(code) && json.current?.is_day === 1) mood = "sunny";
+    else if (windSpeed != null && windSpeed >= 12) mood = "windy";
     const packing: string[] =
       mood === "rain"
         ? ["Yağmurluk", "Su geçirmez ayakkabı"]
         : mood === "snow"
           ? ["Mont", "Eldiven", "Kaymaz bot"]
-          : mood === "sunny"
-            ? ["Güneş kremi", "Şapka", "Su şişesi"]
-            : ["Hafif ceket", "Rahat ayakkabı"];
-    return { success: true, data: { temp, weatherCode: code, mood, packing } };
+          : mood === "windy"
+            ? ["Rüzgarlık", "Sıkı şapka veya bere"]
+            : mood === "sunny"
+              ? ["Güneş kremi", "Şapka", "Su şişesi"]
+              : ["Hafif ceket", "Rahat ayakkabı"];
+    return { success: true, data: { temp, weatherCode: code, mood, windSpeed, packing } };
   } catch {
     return reply.status(502).send({ success: false, error: { message: "Hava durumu alınamadı" } });
   }

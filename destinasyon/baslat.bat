@@ -14,12 +14,8 @@ echo ============================================================
 echo.
 
 if /I "%~1"=="--import" (
-  echo [Veri] veritabani paketi PostgreSQL'e aktariliyor...
-  python tools\import_veritabani_paket.py
-  if errorlevel 1 (
-    echo Paket yuklenemedi; 6 il klasoru varsa eski import deneniyor...
-    python tools\import_from_odev.py
-  )
+  echo [Veri] 6 il + resimler PostgreSQL'e aktariliyor...
+  python tools\import_from_odev.py
   echo.
 )
 
@@ -36,11 +32,11 @@ start "Yonetim Paneli" cmd /k "cd /d "%~dp0" && baslat-panel.bat"
 
 echo.
 echo Tarayici: http://localhost:5173
-echo Yonetim (web): http://localhost:5173/admin  -> admin@turizm.local / admin123
+echo Yonetim (web): http://localhost:5173/yonetim  -> admin@turizm.local / admin123
 echo Masaustu panel: bu pencerede "Yonetim Paneli" acilir
 echo Profil: http://localhost:5173/profil  (once /giris ile kayit olun)
 echo.
 echo Veri aktarmak icin: baslat.bat --import
 start "" "http://localhost:5173/"
-start "" "http://localhost:5173/admin"
+start "" "http://localhost:5173/yonetim"
 pause

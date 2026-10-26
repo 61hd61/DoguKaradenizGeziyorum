@@ -157,7 +157,7 @@ export default function AdminPage() {
             <li>
               <strong>destinasyon\baslat.bat</strong> ile API + web + paneli birlikte açın
             </li>
-            <li>Tarayıcıda <strong>http://localhost:5173/admin</strong> sayfasını yenileyin</li>
+            <li>Tarayıcıda <strong>http://localhost:5173/yonetim</strong> sayfasını yenileyin</li>
           </ol>
         </div>
       ) : null}

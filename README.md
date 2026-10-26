@@ -26,7 +26,8 @@ GitHub’daki `localhost` linkleri **sadece bilgisayarınızda sunucu çalışı
    TUMUNU-BASLAT.bat
    ```
 
-**Admin (web):** http://localhost:5173/admin — `admin@turizm.local` / `admin123`  
+**Yönetim (ayrı sayfa):** http://localhost:5173/yonetim — `admin@turizm.local` / `admin123`  
+(Kullanıcı menüsünde yönetim linki yok.)  
 (API ilk açılışta bu hesabı oluşturur.)
 
 ## Veri
