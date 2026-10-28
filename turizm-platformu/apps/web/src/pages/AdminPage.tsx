@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
 
 interface Overview {
   destinations: number
@@ -76,7 +77,7 @@ export default function AdminPage() {
       })
       .catch(() => {
         setApiOk(false)
-        setError('API bağlantısı yok — önce destinasyon\\baslat.bat veya turizm-platformu\\start_all.bat çalıştırın.')
+        setError(PREVIEW_SERVER_NOTE)
       })
   }, [])
 
@@ -119,14 +120,20 @@ export default function AdminPage() {
   async function onAdminLogin(e: FormEvent) {
     e.preventDefault()
     setLoginError(null)
-    const res = await fetch('/api/v1/auth/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const body = await res.json()
-    if (!res.ok) {
-      setLoginError(body.error?.message || 'Giriş başarısız')
+    let res: Response
+    try {
+      res = await fetch('/api/v1/auth/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+    } catch {
+      setLoginError(PREVIEW_SERVER_NOTE)
+      return
+    }
+    const body = await res.json().catch(() => null)
+    if (!res.ok || !body) {
+      setLoginError(body?.error?.message || PREVIEW_SERVER_NOTE)
       return
     }
     localStorage.setItem('turizm_admin_token', body.data.accessToken)

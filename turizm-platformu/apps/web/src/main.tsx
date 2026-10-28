@@ -6,6 +6,7 @@ import App from './App.tsx'
 import { TourProvider } from './context/TourContext'
 import { WeatherThemeProvider } from './context/WeatherThemeContext'
 import { flushPendingReviews } from './lib/offlineReviews'
+import { routerBase } from './lib/previewCatalog'
 
 window.addEventListener('online', () => {
   const token = localStorage.getItem('turizm_token')
@@ -13,7 +14,7 @@ window.addEventListener('online', () => {
 })
 
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
+  <BrowserRouter basename={routerBase()}>
     <WeatherThemeProvider>
       <TourProvider>
         <App />

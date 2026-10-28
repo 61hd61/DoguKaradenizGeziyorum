@@ -4,23 +4,19 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2022"],
-    "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noEmit": false,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@turizm/shared": ["../packages/shared/src"]
+      "@turizm/shared": ["../../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/map-server.ts", "src/lib/**/*.ts"],
   "exclude": ["node_modules", "dist", "prisma"]
 }

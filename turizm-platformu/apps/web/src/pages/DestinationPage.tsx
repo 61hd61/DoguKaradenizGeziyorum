@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useTour } from '../context/TourContext'
 import { queueReview } from '../lib/offlineReviews'
 import { translateUiText } from '../lib/autoTranslate'
+import { PREVIEW_SERVER_NOTE, assetUrl, findInCatalog, loadPreviewCatalog } from '../lib/previewCatalog'
 
 interface DestinationDetail {
   id: string
@@ -31,9 +32,7 @@ interface ReviewRow {
 }
 
 function imageSrc(path?: string | null) {
-  if (!path) return null
-  if (path.startsWith('http')) return path
-  return path.startsWith('/') ? path : `/${path}`
+  return assetUrl(path)
 }
 
 const CATEGORIES = [
@@ -54,14 +53,20 @@ export default function DestinationPage() {
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewCat, setReviewCat] = useState('SOLO')
   const [reviewMsg, setReviewMsg] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState(false)
 
   useEffect(() => {
     if (!key) return
     setError(null)
+    setPreviewMode(false)
     fetch(`/api/v1/destinations/item/${encodeURIComponent(key)}`)
       .then(async (r) => {
         const body = await r.json()
-        if (!r.ok) throw new Error(body.error?.message || 'Bulunamadı')
+        if (!r.ok) {
+          const err = new Error(body.error?.message || 'Bulunamadı') as Error & { status?: number }
+          err.status = r.status
+          throw err
+        }
         const data = body.data as DestinationDetail
         if (data.shortDescription) {
           data.shortDescription = await translateUiText(data.shortDescription)
@@ -69,7 +74,32 @@ export default function DestinationPage() {
         setDest(data)
         void fetch(`/api/v1/destinations/item/${body.data.id}/click`, { method: 'POST' })
       })
-      .catch((e: Error) => setError(e.message))
+      .catch(async (e: Error & { status?: number }) => {
+        if (e.status && e.status < 500) {
+          setError(e.message)
+          return
+        }
+        try {
+          const found = findInCatalog(await loadPreviewCatalog(), key)
+          if (!found) throw new Error('Bulunamadı')
+          setDest({
+            id: found.id,
+            name: found.name,
+            slug: found.slug,
+            description: found.description,
+            shortDescription: found.shortDescription,
+            latitude: found.latitude,
+            longitude: found.longitude,
+            images: found.images,
+            thumbnailUrl: found.thumbnailUrl,
+            type: found.type?.name ? { name: found.type.name, color: found.type.color ?? undefined } : undefined,
+            province: found.province?.name ? { name: found.province.name } : undefined,
+          })
+          setPreviewMode(true)
+        } catch (fallback) {
+          setError(fallback instanceof Error ? fallback.message : 'Bulunamadı')
+        }
+      })
   }, [key])
 
   useEffect(() => {
@@ -186,6 +216,7 @@ export default function DestinationPage() {
 
       <section className="mt-10">
         <h2 className="text-lg font-medium">{t('reviews')}</h2>
+        {previewMode ? <p className="mt-2 text-sm text-slate-500">{PREVIEW_SERVER_NOTE}</p> : null}
         <ul className="mt-3 space-y-3 text-sm">
           {reviews.map((r) => (
             <li key={r.id} className="rounded border border-slate-200 bg-white p-3">

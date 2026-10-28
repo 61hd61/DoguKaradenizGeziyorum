@@ -42,3 +42,6 @@ uploads/
 **/.expo/
 **/android/
 **/ios/
+
+# Pages önizleme kataloğu (derlemede üretilir)
+turizm-platformu/apps/web/public/preview/

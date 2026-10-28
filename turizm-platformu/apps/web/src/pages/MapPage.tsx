@@ -11,6 +11,15 @@ import DestinationMarkers from '../components/DestinationMarkers'
 import WeatherWidget from '../components/WeatherWidget'
 import { useTour } from '../context/TourContext'
 import { useWeatherTheme } from '../context/WeatherThemeContext'
+import {
+  PREVIEW_SERVER_NOTE,
+  assetUrl,
+  filterCatalog,
+  loadPreviewCatalog,
+  provincesFrom,
+  routerBase,
+  typesFrom,
+} from '../lib/previewCatalog'
 
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl
 L.Icon.Default.mergeOptions({
@@ -113,9 +122,7 @@ function mapDestination(raw: Record<string, unknown>): Destination | null {
 }
 
 function imageSrc(path?: string | null) {
-  if (!path) return null
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
-  return path.startsWith('/') ? path : `/${path}`
+  return assetUrl(path)
 }
 
 function escapeHtml(s: string) {
@@ -184,6 +191,7 @@ export default function MapPage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [usingPreview, setUsingPreview] = useState(false)
   const [lastRevision, setLastRevision] = useState<string | null>(null)
 
   useEffect(() => {
@@ -192,15 +200,33 @@ export default function MapPage() {
   }, [search])
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/v1/destinations/provinces').then((res) => res.json() as Promise<ApiListResponse<NamedRef[]>>),
-      fetch('/api/v1/destinations/types').then((res) => res.json() as Promise<ApiListResponse<NamedRef[]>>),
-    ])
-      .then(([provinceRes, typeRes]) => {
-        setProvinces(Array.isArray(provinceRes.data) ? provinceRes.data : [])
-        setTypes(Array.isArray(typeRes.data) ? typeRes.data : [])
-      })
-      .catch(() => setError('İl ve tür listesi yüklenemedi.'))
+    let cancelled = false
+    async function loadLists() {
+      try {
+        const [provinceRes, typeRes] = await Promise.all([
+          fetch('/api/v1/destinations/provinces').then((res) => res.json() as Promise<ApiListResponse<NamedRef[]>>),
+          fetch('/api/v1/destinations/types').then((res) => res.json() as Promise<ApiListResponse<NamedRef[]>>),
+        ])
+        if (!Array.isArray(provinceRes.data) || !Array.isArray(typeRes.data)) throw new Error('list')
+        if (cancelled) return
+        setProvinces(provinceRes.data)
+        setTypes(typeRes.data)
+      } catch {
+        try {
+          const rows = await loadPreviewCatalog()
+          if (cancelled) return
+          setProvinces(provincesFrom(rows))
+          setTypes(typesFrom(rows))
+          setUsingPreview(true)
+        } catch {
+          if (!cancelled) setError('İl ve tür listesi yüklenemedi.')
+        }
+      }
+    }
+    void loadLists()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const loadDestinations = useCallback(async () => {
@@ -217,12 +243,29 @@ export default function MapPage() {
       const mapped = (body.data ?? []).map(mapDestination).filter((d): d is Destination => d !== null)
       setDestinations(mapped)
       setTotal(body.meta?.total ?? mapped.length)
+      setUsingPreview(false)
     } catch {
-      setDestinations([])
-      setTotal(0)
-      setError(
-        'Destinasyonlar alınamadı. Önce destinasyon\\baslat.bat veya turizm-platformu\\start_all.bat ile API (port 3000) ve web (5173) açık olmalı.',
-      )
+      try {
+        const rows = filterCatalog(await loadPreviewCatalog(), {
+          search: debouncedSearch,
+          provinceId,
+          typeId,
+        })
+        const mapped = rows
+          .map((row) => mapDestination(row as unknown as Record<string, unknown>))
+          .filter((d): d is Destination => d !== null)
+        setDestinations(mapped)
+        setTotal(mapped.length)
+        setUsingPreview(true)
+        setError(null)
+      } catch {
+        setDestinations([])
+        setTotal(0)
+        setUsingPreview(false)
+        setError(
+          'Destinasyonlar alınamadı. Önce destinasyon\\baslat.bat veya turizm-platformu\\start_all.bat ile API (port 3000) ve web (5173) açık olmalı.',
+        )
+      }
     } finally {
       setLoading(false)
     }
@@ -271,7 +314,7 @@ export default function MapPage() {
         <div>${escapeHtml(dest.typeName)} · ${escapeHtml(dest.provinceName)}</div>
         ${dest.shortDescription ? `<p style="margin:4px 0;font-size:12px;color:#475569">${escapeHtml(dest.shortDescription.slice(0, 120))}</p>` : ''}
         ${imgHtml}
-        <p style="margin-top:8px"><a href="/destinasyon/${dest.id}">Detay →</a></p>
+        <p style="margin-top:8px"><a href="${routerBase()}/destinasyon/${dest.id}">Detay →</a></p>
       </div>`
       return {
         id: dest.id,
@@ -382,6 +425,7 @@ export default function MapPage() {
             </Link>
           </div>
           <p className={`text-sm ${error ? 'text-red-600' : 'text-slate-600'}`}>{statusText}</p>
+          {usingPreview ? <p className="text-sm text-slate-500">{PREVIEW_SERVER_NOTE}</p> : null}
         </div>
       </div>
       <div className="relative min-h-[480px] w-full flex-1 bg-slate-200">

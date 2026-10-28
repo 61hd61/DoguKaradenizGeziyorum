@@ -1,5 +1,9 @@
 # Dugu Karadeniz Geziyorum
 
+**Canlı site:** https://61hd61.github.io/DuguKaradenizGeziyorum/
+
+Haritayı, destinasyon sayfalarını ve tur listesini bu adreste gezebilirsiniz. Giriş, yorum ve yönetim bilgisayarınızdaki sunucuda çalışır (`TUMUNU-BASLAT.bat`).
+
 Karadeniz turizm platformu: **harita (web)**, **API**, **masaüstü veri paneli**, isteğe bağlı **mobil (Expo)**.
 
 ## Ne nerede?

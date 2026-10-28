@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
 
 /** Gmail, Outlook, Yahoo, iCloud, Hotmail, kurumsal ve alt alan adları. */
 function isValidEmail(email: string): boolean {
@@ -36,15 +37,21 @@ export default function LoginPage() {
     e.preventDefault()
     setMessage(null)
     setMessageOk(false)
-    const res = await fetch('/api/v1/auth/login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: loginId.trim(), password: loginPass }),
-    })
-    const body = await res.json()
-    if (!res.ok) {
-      setMessage(body.error?.message || 'Giriş başarısız')
+    let res: Response
+    try {
+      res = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: loginId.trim(), password: loginPass }),
+      })
+    } catch {
+      setMessage(PREVIEW_SERVER_NOTE)
+      return
+    }
+    const body = await res.json().catch(() => null)
+    if (!res.ok || !body) {
+      setMessage(body?.error?.message || PREVIEW_SERVER_NOTE)
       return
     }
     localStorage.setItem('turizm_token', body.data.accessToken)
@@ -79,20 +86,26 @@ export default function LoginPage() {
       return
     }
 
-    const res = await fetch('/api/v1/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        username: user,
-        email: mail,
-        password,
-      }),
-    })
-    const body = await res.json()
-    if (!res.ok) {
-      setMessage(body.error?.message || 'Kayıt başarısız')
+    let res: Response
+    try {
+      res = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          username: user,
+          email: mail,
+          password,
+        }),
+      })
+    } catch {
+      setMessage(PREVIEW_SERVER_NOTE)
+      return
+    }
+    const body = await res.json().catch(() => null)
+    if (!res.ok || !body) {
+      setMessage(body?.error?.message || PREVIEW_SERVER_NOTE)
       return
     }
     if (body.data.requiresEmailVerification) {
@@ -109,6 +122,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-10">
+      <p className="mb-4 text-sm text-slate-600">{PREVIEW_SERVER_NOTE}</p>
       <div className="flex gap-2 border-b border-slate-200 pb-4">
         <button
           type="button"
