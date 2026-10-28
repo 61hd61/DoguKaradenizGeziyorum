@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
+import { loadPreviewCatalog, loadPreviewSample, PREVIEW_DEMO_TOKEN, PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
 
 interface Overview {
   destinations: number
@@ -65,24 +65,52 @@ export default function AdminPage() {
   const [editName, setEditName] = useState('')
   const [editShort, setEditShort] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [apiOk, setApiOk] = useState<boolean | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [sampleMode, setSampleMode] = useState(false)
 
   useEffect(() => {
     fetch('/api/v1/admin/overview')
       .then(async (r) => {
-        setApiOk(r.ok)
         const body = await r.json()
-        if (body.data) setData(body.data)
-        else if (!r.ok) setError('Özet alınamadı')
+        if (!r.ok || !body?.data) throw new Error('overview')
+        setData(body.data)
       })
       .catch(() => {
-        setApiOk(false)
-        setError(PREVIEW_SERVER_NOTE)
+        setSampleMode(true)
+        loadPreviewSample()
+          .then((sample) => setData(sample.admin.overview))
+          .catch(() => setError(PREVIEW_SERVER_NOTE))
       })
   }, [])
 
+  async function fillSampleAdmin() {
+    const sample = await loadPreviewSample()
+    const catalog = await loadPreviewCatalog().catch(() => [])
+    setData(sample.admin.overview)
+    setUsers(sample.admin.users)
+    setReviews(sample.admin.reviews)
+    setAnalytics(sample.admin.analytics)
+    setDestRows(
+      catalog.slice(0, 12).map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        shortDescription: row.shortDescription || '',
+        description: row.description || '',
+        province: row.province?.name,
+        type: row.type?.name,
+      })),
+    )
+    setSampleMode(true)
+    setNotice('Kullanıcı, yorum ve tur sayıları yapaydır. Listedeki destinasyon adları gerçek kayıtlardır.')
+  }
+
   useEffect(() => {
     if (!adminToken) return
+    if (adminToken === PREVIEW_DEMO_TOKEN) {
+      void fillSampleAdmin()
+      return
+    }
     const headers = { Authorization: `Bearer ${adminToken}` }
     Promise.all([
       fetch('/api/v1/admin/users', { headers }).then((r) => r.json()),
@@ -99,6 +127,24 @@ export default function AdminPage() {
 
   async function reloadDestinations() {
     if (!adminToken) return
+    if (adminToken === PREVIEW_DEMO_TOKEN) {
+      const catalog = await loadPreviewCatalog()
+      const query = destSearch.trim().toLocaleLowerCase('tr')
+      const rows = catalog
+        .filter((row) => !query || row.name.toLocaleLowerCase('tr').includes(query))
+        .slice(0, 40)
+        .map((row) => ({
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          shortDescription: row.shortDescription || '',
+          description: row.description || '',
+          province: row.province?.name,
+          type: row.type?.name,
+        }))
+      setDestRows(rows)
+      return
+    }
     const headers = { Authorization: `Bearer ${adminToken}` }
     const q = destSearch.trim() ? `&search=${encodeURIComponent(destSearch.trim())}` : ''
     const res = await fetch(`/api/v1/admin/destinations?limit=40${q}`, { headers })
@@ -108,6 +154,12 @@ export default function AdminPage() {
 
   async function saveDestination(id: string) {
     if (!adminToken) return
+    if (adminToken === PREVIEW_DEMO_TOKEN) {
+      setDestRows((rows) => rows.map((row) => (row.id === id ? { ...row, name: editName, shortDescription: editShort } : row)))
+      setEditId(null)
+      setNotice('Deneme metni yalnız bu ekranda durur. Destinasyon dosyasına yazılmadı.')
+      return
+    }
     await fetch(`/api/v1/admin/destinations/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
@@ -128,12 +180,19 @@ export default function AdminPage() {
         body: JSON.stringify({ email, password }),
       })
     } catch {
-      setLoginError(PREVIEW_SERVER_NOTE)
+      localStorage.setItem('turizm_admin_token', PREVIEW_DEMO_TOKEN)
+      setAdminToken(PREVIEW_DEMO_TOKEN)
+      setLoginError(null)
       return
     }
     const body = await res.json().catch(() => null)
-    if (!res.ok || !body) {
-      setLoginError(body?.error?.message || PREVIEW_SERVER_NOTE)
+    if (!res.ok || !body?.data?.accessToken) {
+      if (res.status === 401 || res.status === 403) {
+        setLoginError(body?.error?.message || 'Giriş olmadı')
+        return
+      }
+      localStorage.setItem('turizm_admin_token', PREVIEW_DEMO_TOKEN)
+      setAdminToken(PREVIEW_DEMO_TOKEN)
       return
     }
     localStorage.setItem('turizm_admin_token', body.data.accessToken)
@@ -145,6 +204,9 @@ export default function AdminPage() {
     setAdminToken(null)
     setUsers([])
     setReviews([])
+    setAnalytics(null)
+    setDestRows([])
+    setNotice(null)
   }
 
   return (
@@ -156,17 +218,25 @@ export default function AdminPage() {
         listesi burada.
       </p>
 
-      {apiOk === false || error ? (
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          {error || 'Sunucular kapalı görünüyor.'}
-          <ol className="mt-2 list-decimal pl-5">
-            <li>PostgreSQL çalışsın (veritabanı: trabzon_turizm)</li>
-            <li>
-              <strong>destinasyon\baslat.bat</strong> ile API + web + paneli birlikte açın
-            </li>
-            <li>Tarayıcıda <strong>http://localhost:5173/yonetim</strong> sayfasını yenileyin</li>
-          </ol>
+      {sampleMode || notice ? (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          {notice || 'Sunucu kapalı. Aşağıdaki sayılar yapay kontrol verisidir; destinasyonlar gerçektir.'}
+          {!adminToken ? (
+            <button
+              type="button"
+              className="mt-3 block rounded bg-slate-900 px-3 py-2 text-white"
+              onClick={() => {
+                localStorage.setItem('turizm_admin_token', PREVIEW_DEMO_TOKEN)
+                setAdminToken(PREVIEW_DEMO_TOKEN)
+              }}
+            >
+              Örnek kayıtları aç
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {error && !sampleMode ? (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{error}</div>
       ) : null}
 
       {!adminToken ? (

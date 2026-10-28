@@ -11,6 +11,7 @@ export interface TourStop {
 interface TourContextValue {
   stops: TourStop[]
   addStop: (stop: TourStop) => void
+  replaceStops: (next: TourStop[]) => void
   removeStop: (id: string) => void
   clearStops: () => void
   reorder: (from: number, to: number) => void
@@ -43,6 +44,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const replaceStops = useCallback((nextStops: TourStop[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextStops))
+    setStops(nextStops)
+  }, [])
+
   const removeStop = useCallback((id: string) => {
     setStops((prev) => {
       const next = prev.filter((s) => s.id !== id)
@@ -68,8 +74,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ stops, addStop, removeStop, clearStops, reorder }),
-    [stops, addStop, removeStop, clearStops, reorder],
+    () => ({ stops, addStop, replaceStops, removeStop, clearStops, reorder }),
+    [stops, addStop, replaceStops, removeStop, clearStops, reorder],
   )
 
   return <TourContext.Provider value={value}>{children}</TourContext.Provider>

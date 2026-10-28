@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/build-preview-catalog.mjs",
+    "predev": "node scripts/build-preview-catalog.mjs && node scripts/build-preview-sample.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/build-preview-catalog.mjs",
+    "prebuild": "node scripts/build-preview-catalog.mjs && node scripts/build-preview-sample.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

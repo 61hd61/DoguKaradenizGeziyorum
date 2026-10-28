@@ -1,5 +1,7 @@
 export const PREVIEW_SERVER_NOTE =
-  'Bu açık önizlemede giriş, yorum ve yönetim sunucusu yok. Harita ve destinasyonlar gezilebilir; hesap işlemleri için bilgisayarınızda TUMUNU-BASLAT.bat çalıştırın.'
+  'Destinasyonlar gerçek kayıttır. Yorum, profil, blog ve tur listesi yapay kontrol verisidir; giriş sunucusu bu sayfada yoktur.'
+
+export const PREVIEW_DEMO_TOKEN = 'preview-demo'
 
 export interface CatalogRecord {
   id: string
@@ -90,4 +92,122 @@ export function typesFrom(rows: CatalogRecord[]): { id: string; name: string }[]
 export function findInCatalog(rows: CatalogRecord[], key: string): CatalogRecord | undefined {
   const decoded = decodeURIComponent(key)
   return rows.find((row) => row.id === decoded || row.slug === decoded)
+}
+
+export interface SampleUser {
+  id: string
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  bio: string
+  followers: number
+  following: number
+  posts: number
+  createdAt?: string
+}
+
+export interface SamplePost {
+  id: string
+  userId: string
+  username: string
+  title: string
+  content: string
+  likeCount?: number
+  commentCount?: number
+  createdAt?: string
+}
+
+export interface SampleReview {
+  id: string
+  destinationId: string
+  destinationName: string
+  username: string
+  rating: number
+  category: string
+  content: string
+  createdAt?: string
+  sample?: boolean
+}
+
+export interface SampleRouteStop {
+  id: string
+  name: string
+  latitude: number
+  longitude: number
+  typeName?: string
+}
+
+export interface SampleRoute {
+  id: string
+  name: string
+  description?: string
+  usageCount?: number
+  averageRating?: number
+  stops: SampleRouteStop[]
+}
+
+export interface PreviewSample {
+  synthetic: boolean
+  highlights: {
+    username: string
+    displayName: string
+    destinationId: string
+    destinationName: string
+  }
+  users: SampleUser[]
+  posts: SamplePost[]
+  reviews: SampleReview[]
+  routes: SampleRoute[]
+  admin: {
+    overview: {
+      destinations: number
+      provinces: number
+      types: number
+      users: number
+      reviews: number
+      posts: number
+      tours: number
+      byProvince: { name: string; count: number }[]
+    }
+    users: {
+      id: string
+      username: string
+      email: string
+      firstName: string
+      lastName: string
+      passwordHashPreview: string
+      createdAt?: string
+    }[]
+    reviews: {
+      id: string
+      rating: number
+      content: string
+      username: string
+      destination: string
+      createdAt?: string
+    }[]
+    analytics: {
+      clicks: number
+      topDestinations: { name: string; province?: string; viewCount?: number; reviewCount?: number }[]
+      popularRoutes: { name: string; usageCount?: number }[]
+    }
+  }
+}
+
+let sampleCache: Promise<PreviewSample> | null = null
+
+export function loadPreviewSample(): Promise<PreviewSample> {
+  if (!sampleCache) {
+    sampleCache = fetch(`${import.meta.env.BASE_URL}preview/sample.json`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error('sample')
+        return (await res.json()) as PreviewSample
+      })
+      .catch((err: unknown) => {
+        sampleCache = null
+        throw err
+      })
+  }
+  return sampleCache
 }

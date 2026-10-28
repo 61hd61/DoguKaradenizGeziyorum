@@ -17,174 +17,46 @@ body,
   background: #e2e8f0;
 }
 
-html[data-weather='cloud'] .user-shell.app-shell {
-  background: #f8fafc;
+html[data-weather='sunny'] {
+  --site-bg: #fff1dc;
+  --site-bar: #ffd7a3;
+  --site-line: #e8a15a;
 }
 
-html[data-weather='windy'] .user-shell.app-shell {
-  background: linear-gradient(105deg, #e2e8f0 0%, #f1f5f9 40%, #e0f2fe 100%);
-  transition: background 1.2s ease;
+html[data-weather='rain'] {
+  --site-bg: #e4f2fb;
+  --site-bar: #b9dff6;
+  --site-line: #6eafd4;
 }
 
-html[data-weather='sunny'] .user-shell.app-shell {
-  background: linear-gradient(180deg, #fff7ed 0%, #fef3c7 80px, #f8fafc 200px);
+html[data-weather='snow'] {
+  --site-bg: #f3f7fb;
+  --site-bar: #d5e6f4;
+  --site-line: #a9c4d8;
 }
 
-html[data-weather='rain'] .user-shell.app-shell {
-  background: linear-gradient(180deg, #cbd5e1 0%, #e0f2fe 100px, #f1f5f9 220px);
+html[data-weather='cloud'] {
+  --site-bg: #eceff3;
+  --site-bar: #d3dae3;
+  --site-line: #aeb8c4;
 }
 
-html[data-weather='snow'] .user-shell.app-shell {
-  background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 120px, #f8fafc 240px);
+html[data-weather='windy'] {
+  --site-bg: #e5f7f4;
+  --site-bar: #bfece4;
+  --site-line: #6fbfb2;
 }
 
-@keyframes weather-snow-fall {
-  0% {
-    transform: translateY(-10vh) rotate(0deg);
-    opacity: 0.9;
-  }
-  100% {
-    transform: translateY(110vh) rotate(360deg);
-    opacity: 0.3;
-  }
-}
-
-@keyframes weather-rain-fall {
-  0% {
-    transform: translateY(-20px);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateY(100vh);
-    opacity: 0.15;
-  }
-}
-
-@keyframes weather-wind-blow {
-  0% {
-    transform: translateX(-120%) skewX(-12deg);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.35;
-  }
-  100% {
-    transform: translateX(120vw) skewX(-12deg);
-    opacity: 0;
-  }
-}
-
-@keyframes weather-sun-glow {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-.weather-fx-layer {
-  mix-blend-mode: normal;
-}
-
-.weather-snowflake {
-  position: absolute;
-  top: -5vh;
-  line-height: 1;
-  color: #e0f2fe;
-  text-shadow: 0 0 4px #fff;
-  animation: weather-snow-fall linear infinite;
-  opacity: 0.55;
-}
-
-.weather-raindrop {
-  position: absolute;
-  top: -24px;
-  width: 2px;
-  height: 16px;
-  background: linear-gradient(to bottom, rgba(148, 163, 184, 0), rgba(59, 130, 246, 0.75));
-  animation: weather-rain-fall linear infinite;
-}
-
-.weather-fx-rain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(100, 116, 139, 0.08);
-  pointer-events: none;
-}
-
-.weather-wind-streak {
-  position: absolute;
-  left: -30%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.55), transparent);
-  animation: weather-wind-blow linear infinite;
-}
-
-.weather-wind-leaf {
-  position: absolute;
-  left: -10%;
-  font-size: 1.25rem;
-  animation: weather-wind-blow linear infinite;
-  opacity: 0.7;
-}
-
-.weather-fx-wind[data-wind='strong'] .weather-wind-streak {
-  height: 4px;
-  opacity: 1;
-}
-
-@keyframes weather-cloud-drift {
-  0% {
-    transform: translateX(-15vw);
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 0.45;
-  }
-  100% {
-    transform: translateX(115vw);
-    opacity: 0.1;
-  }
-}
-
-.weather-cloud-puff {
-  position: absolute;
-  left: -10%;
-  font-size: 1.75rem;
-  opacity: 0.22;
-  animation: weather-cloud-drift linear infinite;
-}
-
-.weather-sun-disc {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fde047 0%, #fbbf24 45%, transparent 70%);
-  box-shadow: 0 0 40px rgba(251, 191, 36, 0.65);
-  animation: weather-sun-glow 4s ease-in-out infinite;
-}
-
-.weather-sun-ray {
-  position: absolute;
-  top: 3.6rem;
-  right: 3.6rem;
-  width: 3px;
-  height: 1.75rem;
-  background: linear-gradient(to bottom, rgba(251, 191, 36, 0.5), transparent);
-  transform-origin: center 0;
-  opacity: 0.6;
+.user-shell.app-shell {
+  background: var(--site-bg, #f8fafc);
+  transition: background-color 0.6s ease;
 }
 
 .user-shell header,
-.user-shell main,
 .user-shell footer {
-  transition: background-color 0.8s ease, border-color 0.8s ease;
+  background: var(--site-bar, #fff);
+  border-color: var(--site-line, #e2e8f0);
+  transition: background-color 0.6s ease, border-color 0.6s ease;
 }
 
 .turizm-marker-wrap {

@@ -2,11 +2,11 @@ import { useWeatherTheme, type WeatherMood } from '../context/WeatherThemeContex
 
 const OPTIONS: { value: '' | WeatherMood; label: string }[] = [
   { value: '', label: 'Hava: otomatik' },
-  { value: 'snow', label: '❄ Kar' },
-  { value: 'rain', label: '🌧 Yağmur' },
-  { value: 'windy', label: '💨 Rüzgar' },
-  { value: 'sunny', label: '☀ Güneş' },
-  { value: 'cloud', label: '☁ Bulut' },
+  { value: 'snow', label: 'Kar' },
+  { value: 'rain', label: 'Yağmur' },
+  { value: 'windy', label: 'Rüzgar' },
+  { value: 'sunny', label: 'Güneş' },
+  { value: 'cloud', label: 'Bulut' },
 ]
 
 export default function WeatherMoodPicker() {

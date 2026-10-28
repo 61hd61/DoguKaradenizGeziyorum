@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useTour } from '../context/TourContext'
 import { queueReview } from '../lib/offlineReviews'
 import { translateUiText } from '../lib/autoTranslate'
-import { PREVIEW_SERVER_NOTE, assetUrl, findInCatalog, loadPreviewCatalog } from '../lib/previewCatalog'
+import { PREVIEW_SERVER_NOTE, assetUrl, findInCatalog, loadPreviewCatalog, loadPreviewSample } from '../lib/previewCatalog'
 
 interface DestinationDetail {
   id: string
@@ -29,6 +29,7 @@ interface ReviewRow {
   category: string
   username: string
   createdAt?: string
+  sample?: boolean
 }
 
 function imageSrc(path?: string | null) {
@@ -104,10 +105,34 @@ export default function DestinationPage() {
 
   useEffect(() => {
     if (!dest?.id) return
-    fetch(`/api/v1/destinations/item/${dest.id}/reviews`)
-      .then((r) => r.json())
-      .then((body) => setReviews(body.data ?? []))
-      .catch(() => setReviews([]))
+    let cancelled = false
+    const destinationId = dest.id
+    async function loadReviews() {
+      try {
+        const response = await fetch(`/api/v1/destinations/item/${destinationId}/reviews`)
+        if (!response.ok) throw new Error('reviews')
+        const body = await response.json()
+        const rows = (body.data ?? []) as ReviewRow[]
+        if (rows.length > 0) {
+          if (!cancelled) setReviews(rows)
+          return
+        }
+      } catch {
+        /* örnek yorumlara düş */
+      }
+      try {
+        const sample = await loadPreviewSample()
+        if (!cancelled) {
+          setReviews(sample.reviews.filter((review) => review.destinationId === destinationId))
+        }
+      } catch {
+        if (!cancelled) setReviews([])
+      }
+    }
+    void loadReviews()
+    return () => {
+      cancelled = true
+    }
   }, [dest?.id])
 
   async function submitReview(e: FormEvent) {
@@ -222,6 +247,7 @@ export default function DestinationPage() {
             <li key={r.id} className="rounded border border-slate-200 bg-white p-3">
               <div className="font-medium">
                 @{r.username} · {r.rating}/5 · {r.category}
+                {r.sample ? <span className="ml-2 rounded bg-amber-100 px-1.5 text-xs text-amber-800">örnek</span> : null}
               </div>
               <p className="text-slate-700">{r.content}</p>
             </li>

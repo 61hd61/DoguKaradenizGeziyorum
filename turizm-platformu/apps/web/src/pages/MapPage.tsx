@@ -16,6 +16,7 @@ import {
   assetUrl,
   filterCatalog,
   loadPreviewCatalog,
+  loadPreviewSample,
   provincesFrom,
   routerBase,
   typesFrom,
@@ -192,12 +193,27 @@ export default function MapPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [usingPreview, setUsingPreview] = useState(false)
+  const [sampleLinks, setSampleLinks] = useState<{ username: string; displayName: string; destinationId: string; destinationName: string } | null>(null)
   const [lastRevision, setLastRevision] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
     return () => window.clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    let cancelled = false
+    loadPreviewSample()
+      .then((sample) => {
+        if (!cancelled) setSampleLinks(sample.highlights)
+      })
+      .catch(() => {
+        if (!cancelled) setSampleLinks(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -426,6 +442,26 @@ export default function MapPage() {
           </div>
           <p className={`text-sm ${error ? 'text-red-600' : 'text-slate-600'}`}>{statusText}</p>
           {usingPreview ? <p className="text-sm text-slate-500">{PREVIEW_SERVER_NOTE}</p> : null}
+          {sampleLinks ? (
+            <p className="text-sm text-slate-700">
+              Örnek kayıtlar:{' '}
+              <Link to={`/profil/${sampleLinks.username}`} className="text-emerald-800 underline">
+                {sampleLinks.displayName}
+              </Link>
+              {' · '}
+              <Link to={`/destinasyon/${sampleLinks.destinationId}`} className="text-emerald-800 underline">
+                {sampleLinks.destinationName} yorumları
+              </Link>
+              {' · '}
+              <Link to="/tur" className="text-emerald-800 underline">
+                hazır turlar
+              </Link>
+              {' · '}
+              <Link to="/yonetim" className="text-emerald-800 underline">
+                yönetim
+              </Link>
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="relative min-h-[480px] w-full flex-1 bg-slate-200">

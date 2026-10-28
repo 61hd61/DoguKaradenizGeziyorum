@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapContainer, Polyline, TileLayer, useMap } from 'react-leaflet'
 import { useTranslation } from 'react-i18next'
 import { useTour } from '../context/TourContext'
+import { loadPreviewSample, type SampleRoute } from '../lib/previewCatalog'
 import { useWeatherTheme } from '../context/WeatherThemeContext'
 import 'leaflet/dist/leaflet.css'
 
@@ -11,6 +12,8 @@ interface PopularRoute {
   name: string
   description?: string
   usageCount?: number
+  stops?: SampleRoute['stops']
+  sample?: boolean
 }
 
 function FitRoute({ positions }: { positions: [number, number][] }) {
@@ -24,7 +27,7 @@ function FitRoute({ positions }: { positions: [number, number][] }) {
 
 export default function TourPage() {
   const { t } = useTranslation()
-  const { stops, removeStop, clearStops } = useTour()
+  const { stops, removeStop, clearStops, replaceStops } = useTour()
   const { packing, refresh } = useWeatherTheme()
   const [popular, setPopular] = useState<PopularRoute[]>([])
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -36,10 +39,31 @@ export default function TourPage() {
   const [suggested, setSuggested] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/api/v1/tours/popular-routes')
-      .then((r) => r.json())
-      .then((body) => setPopular(body.data ?? []))
-      .catch(() => setPopular([]))
+    let cancelled = false
+    async function loadRoutes() {
+      try {
+        const response = await fetch('/api/v1/tours/popular-routes')
+        if (!response.ok) throw new Error('routes')
+        const body = await response.json()
+        const rows = (body.data ?? []) as PopularRoute[]
+        if (rows.length > 0) {
+          if (!cancelled) setPopular(rows)
+          return
+        }
+      } catch {
+        /* örnek turlara düş */
+      }
+      try {
+        const sample = await loadPreviewSample()
+        if (!cancelled) setPopular(sample.routes.map((route) => ({ ...route, sample: true })))
+      } catch {
+        if (!cancelled) setPopular([])
+      }
+    }
+    void loadRoutes()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const routeLine = useMemo(
@@ -192,10 +216,19 @@ export default function TourPage() {
       {popular.length > 0 ? (
         <div className="mt-8">
           <h2 className="font-medium">Popüler güzergahlar</h2>
-          <ul className="mt-2 space-y-1 text-sm">
+          <ul className="mt-2 space-y-2 text-sm">
             {popular.map((r) => (
-              <li key={r.id}>
-                {r.name} {r.usageCount != null ? `(${r.usageCount} kullanım)` : ''}
+              <li key={r.id} className="rounded border border-slate-200 bg-white px-3 py-2">
+                <div className="font-medium">
+                  {r.name} {r.usageCount != null ? `(${r.usageCount} kullanım)` : ''}
+                  {r.sample ? <span className="ml-2 rounded bg-amber-100 px-1.5 text-xs text-amber-800">örnek</span> : null}
+                </div>
+                {r.description ? <p className="mt-1 text-slate-600">{r.description}</p> : null}
+                {r.stops && r.stops.length > 0 ? (
+                  <button type="button" className="mt-2 text-emerald-800 underline" onClick={() => replaceStops(r.stops ?? [])}>
+                    Bu turu listeye al
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

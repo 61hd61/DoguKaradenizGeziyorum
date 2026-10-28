@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { loadPreviewSample, PREVIEW_DEMO_TOKEN, type SampleUser } from '../lib/previewCatalog'
 
 interface UserProfile {
   id: string
@@ -48,6 +49,8 @@ export default function ProfilePage() {
   const [postTitle, setPostTitle] = useState('')
   const [postContent, setPostContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const [fromSample, setFromSample] = useState(false)
+  const [directory, setDirectory] = useState<SampleUser[]>([])
 
   const token = localStorage.getItem('turizm_token')
 
@@ -57,25 +60,61 @@ export default function ProfilePage() {
     return n || user.username
   }, [user])
 
+  async function showSampleProfile(name: string) {
+    const sample = await loadPreviewSample()
+    const found = sample.users.find((item) => item.username.toLowerCase() === name.toLowerCase())
+    if (!found) {
+      setFromSample(false)
+      setUser(null)
+      setPosts([])
+      setError('Kullanıcı bulunamadı')
+      return
+    }
+    setFromSample(true)
+    setError(null)
+    setUser({
+      id: found.id,
+      username: found.username,
+      firstName: found.firstName,
+      lastName: found.lastName,
+      bio: found.bio,
+      followers: found.followers,
+      following: found.following,
+      posts: found.posts,
+    })
+    setBioDraft(found.bio || '')
+    setPosts(sample.posts.filter((post) => post.userId === found.id))
+  }
+
   function reloadProfile() {
     if (!target) return
     Promise.all([
       fetch(`/api/v1/social/users/${encodeURIComponent(target)}`).then((r) => r.json()),
       fetch(`/api/v1/social/users/${encodeURIComponent(target)}/posts`).then((r) => r.json()),
     ])
-      .then(([userRes, postsRes]) => {
+      .then(async ([userRes, postsRes]) => {
         if (userRes.data) {
+          setFromSample(false)
           setUser(userRes.data)
           setBioDraft(userRes.data.bio || '')
-        } else setError(userRes.error?.message || 'Kullanıcı bulunamadı')
-        setPosts(Array.isArray(postsRes.data) ? postsRes.data : [])
+          setPosts(Array.isArray(postsRes.data) ? postsRes.data : [])
+          setError(null)
+          return
+        }
+        await showSampleProfile(target)
       })
-      .catch(() => setError('Profil yüklenemedi'))
+      .catch(() => {
+        void showSampleProfile(target).catch(() => setError('Profil yüklenemedi'))
+      })
   }
 
   useEffect(() => {
     if (!target) {
       setError(null)
+      setUser(null)
+      loadPreviewSample()
+        .then((sample) => setDirectory(sample.users))
+        .catch(() => setDirectory([]))
       return
     }
     reloadProfile()
@@ -84,6 +123,10 @@ export default function ProfilePage() {
   async function saveBio(e: FormEvent) {
     e.preventDefault()
     if (!token) return
+    if (token === PREVIEW_DEMO_TOKEN) {
+      setUser((current) => (current ? { ...current, bio: bioDraft } : current))
+      return
+    }
     setSaving(true)
     await fetch('/api/v1/social/me/profile', {
       method: 'PATCH',
@@ -97,6 +140,15 @@ export default function ProfilePage() {
   async function publishPost(e: FormEvent) {
     e.preventDefault()
     if (!token) return
+    if (token === PREVIEW_DEMO_TOKEN) {
+      setPosts((current) => [
+        { id: `yerel-${Date.now()}`, title: postTitle || 'Başlıksız not', content: postContent, likeCount: 0, commentCount: 0 },
+        ...current,
+      ])
+      setPostTitle('')
+      setPostContent('')
+      return
+    }
     setSaving(true)
     const res = await fetch('/api/v1/social/posts', {
       method: 'POST',
@@ -131,10 +183,23 @@ export default function ProfilePage() {
 
   if (!target) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="text-slate-600">Kişisel sayfanız için önce kayıt olun veya giriş yapın.</p>
-        <Link to="/giris" className="mt-4 inline-block rounded bg-emerald-600 px-4 py-2 text-white">
-          Giriş / Kayıt
+      <div className="mx-auto max-w-lg px-4 py-10">
+        <h1 className="text-xl font-semibold">Örnek gezginler</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Bu profiller ve paylaşımlar yapay kontrol verisidir. Destinasyon kayıtlarına dokunulmaz.
+        </p>
+        <ul className="mt-4 space-y-2">
+          {directory.map((person) => (
+            <li key={person.id}>
+              <Link to={`/profil/${person.username}`} className="text-emerald-800 underline">
+                {person.firstName} {person.lastName}
+              </Link>
+              <span className="text-sm text-slate-500"> @{person.username}</span>
+            </li>
+          ))}
+        </ul>
+        <Link to="/giris" className="mt-6 inline-block rounded bg-emerald-600 px-4 py-2 text-white">
+          Örnek hesapla gir
         </Link>
       </div>
     )
@@ -158,6 +223,9 @@ export default function ProfilePage() {
 
         {user ? (
           <>
+            {fromSample ? (
+              <p className="mt-4 rounded bg-amber-50 px-3 py-2 text-sm text-amber-900">Örnek profil ve paylaşımlar.</p>
+            ) : null}
             {user.bio && !isOwn ? <p className="mt-4 text-sm leading-relaxed">{user.bio}</p> : null}
 
             <div className="mt-4 flex gap-8 text-center text-sm">

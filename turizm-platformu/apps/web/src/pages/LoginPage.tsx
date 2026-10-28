@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
+import { loadPreviewSample, PREVIEW_DEMO_TOKEN, PREVIEW_SERVER_NOTE } from '../lib/previewCatalog'
 
 /** Gmail, Outlook, Yahoo, iCloud, Hotmail, kurumsal ve alt alan adları. */
 function isValidEmail(email: string): boolean {
@@ -57,6 +57,20 @@ export default function LoginPage() {
     localStorage.setItem('turizm_token', body.data.accessToken)
     localStorage.setItem('turizm_user', JSON.stringify(body.data.user))
     navigate('/profil')
+  }
+
+  async function openSampleAccount() {
+    setMessage(null)
+    try {
+      const sample = await loadPreviewSample()
+      const user = sample.users[0]
+      if (!user) throw new Error('sample')
+      localStorage.setItem('turizm_token', PREVIEW_DEMO_TOKEN)
+      localStorage.setItem('turizm_user', JSON.stringify(user))
+      navigate('/profil')
+    } catch {
+      setMessage('Örnek hesap yüklenemedi.')
+    }
   }
 
   async function onRegister(e: FormEvent) {
@@ -161,6 +175,9 @@ export default function LoginPage() {
           />
           <button type="submit" className="w-full rounded bg-emerald-600 py-2 text-white">
             Giriş yap
+          </button>
+          <button type="button" className="w-full rounded border border-amber-300 bg-amber-50 py-2 text-sm text-amber-950" onClick={() => void openSampleAccount()}>
+            Örnek hesapla gez
           </button>
           <p className="text-center text-sm">
             <Link to="/sifremi-unuttum" className="text-emerald-700 underline">

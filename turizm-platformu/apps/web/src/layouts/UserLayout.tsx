@@ -2,7 +2,6 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LanguageSelect from '../components/LanguageSelect'
 import PwaInstallBanner from '../components/PwaInstallBanner'
-import WeatherEffects from '../components/WeatherEffects'
 import WeatherMoodPicker from '../components/WeatherMoodPicker'
 import { useTour } from '../context/TourContext'
 
@@ -20,8 +19,7 @@ export default function UserLayout() {
 
   return (
     <div className="user-shell app-shell relative flex min-h-dvh flex-col text-slate-900">
-      <WeatherEffects />
-      <header className="relative z-20 border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md">
+      <header className="relative z-20 border-b shadow-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
             <h1 className="text-lg font-semibold">{t('appTitle')}</h1>
@@ -65,7 +63,7 @@ export default function UserLayout() {
         <Outlet />
       </main>
 
-      <footer className="relative z-20 border-t border-slate-200/80 bg-white/90 px-4 py-2 text-center text-xs text-slate-500 backdrop-blur-md">
+      <footer className="relative z-20 border-t px-4 py-2 text-center text-xs text-slate-600">
         Destinasyon düzenleme: masaüstü <strong>destinasyon\baslat-panel.bat</strong>
         {' · '}
         <Link to="/" className="text-emerald-700 underline">
