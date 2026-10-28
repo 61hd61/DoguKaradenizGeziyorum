@@ -14,19 +14,19 @@ export default function WeatherEffects() {
 
   const snowflakes = useMemo(
     () =>
-      Array.from({ length: 70 }, (_, i) => ({
+      Array.from({ length: 16 }, (_, i) => ({
         id: i,
         left: `${rand(i) * 100}%`,
         delay: `${rand(i + 1) * 4}s`,
-        duration: `${3 + rand(i + 2) * 5}s`,
-        size: 14 + Math.floor(rand(i + 3) * 18),
+        duration: `${4 + rand(i + 2) * 5}s`,
+        size: 10 + Math.floor(rand(i + 3) * 6),
       })),
     [],
   )
 
   const raindrops = useMemo(
     () =>
-      Array.from({ length: 90 }, (_, i) => ({
+      Array.from({ length: 24 }, (_, i) => ({
         id: i,
         left: `${rand(i + 10) * 100}%`,
         delay: `${rand(i + 11) * 1.5}s`,
@@ -37,7 +37,7 @@ export default function WeatherEffects() {
 
   const windStreaks = useMemo(
     () =>
-      Array.from({ length: 36 }, (_, i) => ({
+      Array.from({ length: 8 }, (_, i) => ({
         id: i,
         top: `${rand(i + 20) * 100}%`,
         delay: `${rand(i + 21) * 3}s`,
@@ -49,12 +49,12 @@ export default function WeatherEffects() {
 
   const cloudPuffs = useMemo(
     () =>
-      Array.from({ length: 20 }, (_, i) => ({
+      Array.from({ length: 4 }, (_, i) => ({
         id: i,
-        top: `${10 + rand(i + 30) * 60}%`,
+        top: `${rand(i + 30) * 12}%`,
         delay: `${rand(i + 31) * 8}s`,
-        duration: `${12 + rand(i + 32) * 10}s`,
-        scale: 0.6 + rand(i + 33) * 1.2,
+        duration: `${18 + rand(i + 32) * 10}s`,
+        scale: 0.85 + rand(i + 33) * 0.35,
       })),
     [],
   )
@@ -113,7 +113,7 @@ export default function WeatherEffects() {
             }}
           />
         ))}
-        {Array.from({ length: 8 }, (_, i) => (
+        {Array.from({ length: 2 }, (_, i) => (
           <span
             key={`leaf-${i}`}
             className="weather-wind-leaf"
