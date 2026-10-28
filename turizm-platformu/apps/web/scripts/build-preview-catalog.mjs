@@ -5,13 +5,10 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const sourcePath = resolve(here, '../../../../veritabani/data/destinations.json')
 const outDir = resolve(here, '../public/preview')
-const imageBase = 'https://cdn.jsdelivr.net/gh/61hd61/DuguKaradenizGeziyorum@main/veritabani/'
-
 function imageUrl(path) {
   if (!path || typeof path !== 'string') return null
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  const clean = path.replace(/^\//, '')
-  return imageBase + clean.split('/').map((part) => encodeURIComponent(part)).join('/')
+  return path.replace(/^\//, '')
 }
 
 const raw = JSON.parse(readFileSync(sourcePath, 'utf8'))

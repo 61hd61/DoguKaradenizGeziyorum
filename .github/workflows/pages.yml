@@ -32,9 +32,12 @@ jobs:
         env:
           VITE_BASE_PATH: /DuguKaradenizGeziyorum/
         run: npm run build
-      - name: SPA fallback
+      - name: SPA fallback and photos
         working-directory: turizm-platformu/apps/web
-        run: cp dist/index.html dist/404.html
+        run: |
+          cp dist/index.html dist/404.html
+          mkdir -p dist/images
+          cp -a ../../../veritabani/images/. dist/images/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: turizm-platformu/apps/web/dist
