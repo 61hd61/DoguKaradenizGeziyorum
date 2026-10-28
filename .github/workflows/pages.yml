@@ -30,7 +30,7 @@ jobs:
       - name: Build web
         working-directory: turizm-platformu/apps/web
         env:
-          VITE_BASE_PATH: /DuguKaradenizGeziyorum/
+          VITE_BASE_PATH: /DoguKaradenizGeziyorum/
         run: npm run build
       - name: SPA fallback and photos
         working-directory: turizm-platformu/apps/web

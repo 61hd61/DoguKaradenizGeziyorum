@@ -1,6 +1,6 @@
-# Dugu Karadeniz Geziyorum
+# Doğu Karadeniz Geziyorum
 
-**Canlı site:** https://61hd61.github.io/DoğuKaradenizGeziyorum/
+**Canlı site:** https://61hd61.github.io/DoguKaradenizGeziyorum/
 
 Haritayı, destinasyon sayfalarını ve tur listesini bu adreste gezebilirsiniz. Giriş, yorum ve yönetim bilgisayarınızdaki sunucuda çalışır (`TUMUNU-BASLAT.bat`).
 
